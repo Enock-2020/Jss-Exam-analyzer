@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBC Junior School Exam Analysis System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  
+  <!-- Header -->
+  <header class="bg-indigo-950 text-white p-5 shadow-lg no-print">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">📘</span>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight" id="header-school-name">CBC Junior Secondary Exam Analyzer</h1>
+          <p class="text-indigo-200 text-sm">Automated analysis for Grade 9 Competency Based Curriculum subjects</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="openSettingsModal()" class="bg-indigo-800 hover:bg-indigo-700 px-3 py-2 rounded text-sm font-medium transition shadow-sm flex items-center gap-1">
+          ⚙️ School Settings
+        </button>
+        <button onclick="loadSampleData()" class="bg-indigo-700 hover:bg-indigo-600 px-3 py-2 rounded text-sm font-medium transition shadow-sm">
+          Load Sample Data
+        </button>
+        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded text-sm font-medium transition shadow-sm">
+          Export to CSV
+        </button>
+        <button onclick="clearAllData()" class="bg-rose-700 hover:bg-rose-600 px-3 py-2 rounded text-sm font-medium transition shadow-sm">
+          Clear Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    
+    <!-- KPI Metric Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs uppercase font-semibold text-slate-500 tracking-wider">Learners Enrolled</p>
+        <p id="stat-learners" class="text-3xl font-extrabold text-slate-800 mt-1">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs uppercase font-semibold text-slate-500 tracking-wider">Class Mean Average</p>
+        <p id="stat-class-mean" class="text-3xl font-extrabold text-indigo-600 mt-1">0.0%</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs uppercase font-semibold text-slate-500 tracking-wider">Top Overall Learner</p>
+        <p id="stat-top-score" class="text-base font-bold text-emerald-600 mt-2 truncate">-</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs uppercase font-semibold text-slate-500 tracking-wider">ME & EE Pass Rate</p>
+        <p id="stat-pass-rate" class="text-3xl font-extrabold text-amber-600 mt-1">0%</p>
+      </div>
+    </section>
+
+    <!-- Interactive Dashboards Grid -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+      <!-- Data entry column (1 part) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4 h-fit">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>➕ Learner Record Entry</span>
+        </h2>
+        <form id="marks-form" onsubmit="handleSaveStudent(event)" class="space-y-4">
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-600">Assessment / Admission Number</label>
+            <input type="text" id="admNo" placeholder="e.g. JSS/001" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-600">Full Name</label>
+            <input type="text" id="studentName" placeholder="e.g. Faith Wanjiku" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-600">Gender</label>
+            <select id="gender" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div class="border-t pt-3 mt-2">
+            <span class="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">Subject Performance Scores (/100)</span>
+            <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 max-h-64 overflow-y-auto">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Maths</label>
+                <input type="number" min="0" max="100" id="sub_math" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">English</label>
+                <input type="number" min="0" max="100" id="sub_eng" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Kiswahili</label>
+                <input type="number" min="0" max="100" id="sub_kisw" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Int. Science</label>
+                <input type="number" min="0" max="100" id="sub_sci" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Soc. Studies</label>
+                <input type="number" min="0" max="100" id="sub_sst" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">CRE</label>
+                <input type="number" min="0" max="100" id="sub_cre" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Arts/Sports</label>
+                <input type="number" min="0" max="100" id="sub_arts" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Agric</label>
+                <input type="number" min="0" max="100" id="sub_agric" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600">Pre-Tech</label>
+                <input type="number" min="0" max="100" id="sub_pretech" required class="w-full border border-slate-300 rounded p-1 text-sm text-center">
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium p-2 rounded-lg transition shadow text-sm">
+            Save Learner Marks
+          </button>
+        </form>
+      </div>
+
+      <!-- Charts Column (2 parts) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <span>📈 Class Subject Performance Curve</span>
+          </h2>
+          <div class="h-64 relative">
+            <canvas id="subjectMeanChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <span>📊 Competency Level Distribution</span>
+          </h2>
+          <div class="h-56 relative">
+            <canvas id="competencyDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Subject Means Analysis Table -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 no-print overflow-x-auto">
+      <h2 class="text-lg font-bold text-slate-800 mb-3">📊 Subject Averages & Analysis</h2>
+      <table class="w-full text-sm text-left border-collapse">
+        <thead class="bg-slate-100 text-slate-700">
+          <tr>
+            <th class="p-2.5 border">Subject</th>
+            <th class="p-2.5 border text-center">Subject Mean (%)</th>
+            <th class="p-2.5 border text-center">Highest Mark</th>
+            <th class="p-2.5 border text-center">Lowest Mark</th>
+            <th class="p-2.5 border text-center">Proficiency Level</th>
+          </tr>
+        </thead>
+        <tbody id="subject-stats-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Master Merit List Sheet -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 no-print">
